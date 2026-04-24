@@ -88,38 +88,36 @@ function Read-MXRecord {
         $MXRecords = $MXRecords | Sort-Object -Property Priority
 
         # Attempt to identify mail provider based on MX record
-        $ReservedVariables = @{
-            'DomainNameDashNotation' = $Domain -replace '\.', '-'
-        }
-        if ($MXRecords.Hostname -eq '') {
-            $ValidationFails.Add($NoMxValidation) | Out-Null
-            $MXResults.MailProvider = Get-Content "$($MyInvocation.MyCommand.Module.ModuleBase)\MailProviders\Null.json" | ConvertFrom-Json
-        }
-
-        else {
-            # Load both custom and built-in providers
-            try {
-                $ProviderList = Get-MailProvider -ErrorAction Stop
-            } catch {
-                Write-Verbose "Failed to load mail providers: $($_.Exception.Message)"
-                $ProviderList = @()
+        if (Test-Path "$($MyInvocation.MyCommand.Module.ModuleBase)\MailProviders") {
+            $ReservedVariables = @{
+                'DomainNameDashNotation' = $Domain -replace '\.', '-'
+            }
+            if ($MXRecords.Hostname -eq '') {
+                $ValidationFails.Add($NoMxValidation) | Out-Null
+                $MXResults.MailProvider = Get-Content "$($MyInvocation.MyCommand.Module.ModuleBase)\MailProviders\Null.json" | ConvertFrom-Json
             }
 
-            if ($ProviderList.Count -eq 0) {
-                Write-Verbose 'No mail providers available for matching'
-            }
+            else {
+                $ProviderList = Get-ChildItem "$($MyInvocation.MyCommand.Module.ModuleBase)\MailProviders" -Exclude '_template.json' | ForEach-Object {
+                    try { Get-Content $_ | ConvertFrom-Json -ErrorAction Stop }
+                    catch { Write-Verbose $_.Exception.Message }
+                }
+                foreach ($Record in $MXRecords) {
+                    $ProviderMatched = $false
+                    foreach ($Provider in $ProviderList) {
+                        try {
+                            if ($Record.Hostname -match $Provider.MxMatch) {
+                                $MXResults.MailProvider = $Provider
+                                if (($Provider.SpfReplace | Measure-Object | Select-Object -ExpandProperty Count) -gt 0) {
+                                    $ReplaceList = [System.Collections.Generic.List[string]]::new()
+                                    foreach ($Var in $Provider.SpfReplace) {
+                                        if ($ReservedVariables.Keys -contains $Var) {
+                                            $ReplaceList.Add($ReservedVariables.$Var) | Out-Null
+                                        }
 
-            foreach ($Record in $MXRecords) {
-                $ProviderMatched = $false
-                foreach ($Provider in $ProviderList) {
-                    try {
-                        if ($Record.Hostname -match $Provider.MxMatch) {
-                            $MXResults.MailProvider = $Provider
-                            if (($Provider.SpfReplace | Measure-Object | Select-Object -ExpandProperty Count) -gt 0) {
-                                $ReplaceList = [System.Collections.Generic.List[string]]::new()
-                                foreach ($Var in $Provider.SpfReplace) {
-                                    if ($ReservedVariables.Keys -contains $Var) {
-                                        $ReplaceList.Add($ReservedVariables.$Var) | Out-Null
+                                        else {
+                                            $ReplaceList.Add($Matches.$Var) | Out-Null
+                                        }
                                     }
 
                                     else {

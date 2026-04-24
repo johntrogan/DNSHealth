@@ -50,12 +50,18 @@ function Resolve-DnsHttpsQuery {
 
     $Uri = $QueryTemplate -f $BaseUri, $Domain, $RecordType
 
+    $UseCIPPRestMethod = Get-Command -Name 'Invoke-CIPPRestMethod' -ErrorAction SilentlyContinue
+
     $x = 0
     $Exception = $null
     do {
         $x++
         try {
-            $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -ErrorAction Stop
+            if ($UseCIPPRestMethod) {
+                $Results = Invoke-CIPPRestMethod -Uri $Uri -Headers $Headers -ErrorAction Stop
+            } else {
+                $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -ErrorAction Stop
+            }
         } catch {
             $Exception = $_
             Start-Sleep -Milliseconds 300
