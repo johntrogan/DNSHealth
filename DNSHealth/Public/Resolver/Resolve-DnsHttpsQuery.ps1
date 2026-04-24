@@ -50,7 +50,7 @@ function Resolve-DnsHttpsQuery {
 
     $Uri = $QueryTemplate -f $BaseUri, $Domain, $RecordType
 
-    $UseCIPPRestMethod = Get-Command -Name 'Invoke-CIPPRestMethod' -ErrorAction SilentlyContinue
+    $UseCIPPRestMethod = Get-Command -Name 'Invoke-CIPPRestMethod' -Module CIPPCore -ErrorAction SilentlyContinue
 
     $x = 0
     $Exception = $null
