@@ -3,6 +3,7 @@ name: Publish New Version
 on:
   push:
     tags: "*"
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -17,13 +18,7 @@ jobs:
         with:
           script: |
             Install-Module ModuleBuilder -Force
-            Build-Module
-
-      - name: Update Metadata
-        uses: natescherer/update-powershell-metadata-action@v2
-        with:
-          path: .\Output\DNSHealth
-          version: ${{ github.ref_name }}
+            Build-Module -SemVer ${{ github.ref_name }}
 
       - name: Publish PowerShell Module
         uses: pcgeek86/publish-powershell-module-action@v20

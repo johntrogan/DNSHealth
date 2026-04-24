@@ -22,7 +22,7 @@ function Read-MXRecord {
 
     #>
     [CmdletBinding()]
-    Param(
+    param(
         [Parameter(Mandatory = $true)]
         [string]$Domain
     )
@@ -120,26 +120,30 @@ function Read-MXRecord {
                                         }
                                     }
 
-                                    $ExpectedInclude = $Provider.SpfInclude -f ($ReplaceList -join ', ')
+                                    else {
+                                        $ReplaceList.Add($Matches.$Var) | Out-Null
+                                    }
                                 }
 
-                                else {
-                                    $ExpectedInclude = $Provider.SpfInclude
-                                }
-
-                                # Set ExpectedInclude and Selector fields based on provider details
-                                $MXResults.ExpectedInclude = $ExpectedInclude
-                                $MXResults.Selectors = $Provider.Selectors
-                                $ProviderMatched = $true
-                                break
+                                $ExpectedInclude = $Provider.SpfInclude -f ($ReplaceList -join ', ')
                             }
-                        }
 
-                        catch { Write-Verbose $_.Exception.Message }
+                            else {
+                                $ExpectedInclude = $Provider.SpfInclude
+                            }
+
+                            # Set ExpectedInclude and Selector fields based on provider details
+                            $MXResults.ExpectedInclude = $ExpectedInclude
+                            $MXResults.Selectors = $Provider.Selectors
+                            $ProviderMatched = $true
+                            break
+                        }
                     }
-                    if ($ProviderMatched) {
-                        break
-                    }
+
+                    catch { Write-Verbose $_.Exception.Message }
+                }
+                if ($ProviderMatched) {
+                    break
                 }
             }
         }
