@@ -137,10 +137,8 @@ function Read-MXRecord {
                             $MXResults.Selectors = $Provider.Selectors
                             $ProviderMatched = $true
                             break
-                        }
+                        } catch { Write-Verbose $_.Exception.Message }
                     }
-
-                    catch { Write-Verbose $_.Exception.Message }
                 }
                 if ($ProviderMatched) {
                     break
