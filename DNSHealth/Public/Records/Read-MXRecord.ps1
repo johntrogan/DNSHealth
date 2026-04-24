@@ -61,13 +61,13 @@ function Read-MXRecord {
         if ($Result.Status -eq 3) {
             $ValidationFails.Add($NoMxValidation) | Out-Null
             $MXResults.MailProvider = Get-Content "$($MyInvocation.MyCommand.Module.ModuleBase)\MailProviders\Null.json" | ConvertFrom-Json
-            $MXResults.Selectors = $MXRecords.MailProvider.Selectors
+            $MXResults.Selectors = $MXResults.MailProvider.Selectors
         }
 
         else {
             $ValidationFails.Add($NoMxValidation) | Out-Null
             $MXResults.MailProvider = Get-Content "$($MyInvocation.MyCommand.Module.ModuleBase)\MailProviders\Null.json" | ConvertFrom-Json
-            $MXResults.Selectors = $MXRecords.MailProvider.Selectors
+            $MXResults.Selectors = $MXResults.MailProvider.Selectors
         }
         $MXRecords = $null
     }
@@ -102,8 +102,8 @@ function Read-MXRecord {
                     try { Get-Content $_ | ConvertFrom-Json -ErrorAction Stop }
                     catch { Write-Verbose $_.Exception.Message }
                 }
+                $ProviderMatched = $false
                 foreach ($Record in $MXRecords) {
-                    $ProviderMatched = $false
                     foreach ($Provider in $ProviderList) {
                         try {
                             if ($Record.Hostname -match $Provider.MxMatch) {
@@ -113,35 +113,24 @@ function Read-MXRecord {
                                     foreach ($Var in $Provider.SpfReplace) {
                                         if ($ReservedVariables.Keys -contains $Var) {
                                             $ReplaceList.Add($ReservedVariables.$Var) | Out-Null
-                                        }
-
-                                        else {
+                                        } else {
                                             $ReplaceList.Add($Matches.$Var) | Out-Null
                                         }
-                                    }
-
-                                    else {
-                                        $ReplaceList.Add($Matches.$Var) | Out-Null
                                     }
                                 }
 
                                 $ExpectedInclude = $Provider.SpfInclude -f ($ReplaceList -join ', ')
+                                # Set ExpectedInclude and Selector fields based on provider details
+                                $MXResults.ExpectedInclude = $ExpectedInclude
+                                $MXResults.Selectors = $Provider.Selectors
+                                $ProviderMatched = $true
+                                break
                             }
-
-                            else {
-                                $ExpectedInclude = $Provider.SpfInclude
-                            }
-
-                            # Set ExpectedInclude and Selector fields based on provider details
-                            $MXResults.ExpectedInclude = $ExpectedInclude
-                            $MXResults.Selectors = $Provider.Selectors
-                            $ProviderMatched = $true
-                            break
                         } catch { Write-Verbose $_.Exception.Message }
                     }
-                }
-                if ($ProviderMatched) {
-                    break
+                    if ($ProviderMatched) {
+                        break
+                    }
                 }
             }
         }
