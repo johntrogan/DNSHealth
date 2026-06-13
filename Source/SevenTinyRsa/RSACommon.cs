@@ -1,15 +1,6 @@
 // Sourced verbatim from DNSHealth 1.1.8's vendored inline C# (DNSHealth.psm1
 // Private/Get-RsaPublicKeyInfo.ps1, lines 71-183 of the built .psm1).
 //
-// Compiled to a DLL and preloaded via CRAFT's Worker.SharedAssemblies so the
-// type [SevenTiny.Bantina.Security.RSACommon] is already registered by the
-// time DNSHealth's runtime `Add-Type` check (`-as [type]`) runs in a cloned
-// HTTP worker runspace. CRAFT embeds PowerShell as a library inside its own
-// host (Craft.dll at /app), so $PSHOME resolves to /app and PowerShell's
-// Add-Type can't find Roslyn reference assemblies at /app/ref — runtime
-// CSharp compilation throws DirectoryNotFoundException. Preloading the
-// type-equivalent assembly is the supported escape hatch.
-//
 // Origin: https://github.com/sevenTiny/Bamboo
 //   10-Code/SevenTiny.Bantina/Security/RSACommon.cs
 
