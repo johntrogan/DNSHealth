@@ -53,8 +53,14 @@
     # Modules that must be imported into the global environment prior to importing this module
     #RequiredModules   = @('')
 
-    # Assemblies that must be loaded prior to importing this module
-    # RequiredAssemblies = @()
+    # Assemblies that must be loaded prior to importing this module.
+    # Preloads the precompiled SevenTinyRsa.dll (Source/SevenTinyRsa/) so
+    # Get-RsaPublicKeyInfo finds [SevenTiny.Bantina.Security.RSACommon]
+    # already registered — its existing Add-Type guard then short-circuits
+    # via the `-as [type]` check. Required for hosts where runtime
+    # `Add-Type -Language CSharp` fails (e.g. embedded-PowerShell hosts
+    # with no $PSHOME/ref reference-assemblies directory).
+    RequiredAssemblies = @('SevenTinyRsa.dll')
 
     # Script files (.ps1) that are run in the caller's environment prior to importing this module.
     ScriptsToProcess  = @()
